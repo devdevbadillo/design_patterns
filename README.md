@@ -6,7 +6,7 @@
   - [¿Qué son los Patrones de Diseño?](#que-son-patrones-diseno)
   - [Historia: El "Gang of Four" (GoF)](#historia-gof)
   - [Beneficios de Usar Patrones de Diseño](#beneficios-patrones-diseno)
-  - [Cómo y Cuándo Usar Patrones](#como-cuando-usar-patrones)
+  - [¿Cuándo usar patrones de diseño?](#como-cuando-usar-patrones)
 
 - [Principios de Diseño y Buenas Prácticas de Código](#principios-buenas-practicas)
   - [Principios SOLID](#principios-solid)
@@ -180,15 +180,75 @@
 
 <a id="que-son-patrones-diseno"></a>
 ### ¿Qué son los Patrones de Diseño?
+Los patrones de diseño **son soluciones probadas y reutilizables a problemas comunes** que surgen en el desarrollo de software. Se puede pensar en ellos como `"recetas"` o `"plantillas"` que **describen cómo resolver ciertos problemas** de diseño de manera elegante y eficiente.
+
+> [!NOTE]
+> 
+> No son código que se pueda copiar y pegar directamente, sino más bien **son conceptos y estructuras que se adaptan a un contexto específico**.
 
 <a id="historia-gof"></a>
 ### Historia: El "Gang of Four" (GoF)
+En 1994, cuatro autores publicaron el libro que cambiaría la industria del software:
+
+- `"Design Patterns: Elements of Reusable Object-Oriented Software"`
+
+Los cuatro autores (Gang of Four):
+  * Erich Gamma
+  * Richard Helm
+  * Ralph Johnson
+  * John Vlissides
+
+`Antes del libro`: Los desarrolladores **resolvían los mismos problemas una y otra vez**, cada uno a su manera, **sin un lenguaje común para discutir soluciones**.
+
+`El aporte del GoF`: Identificaron, nombraron y documentaron **23 patrones de diseño** agrupados en tres categorías:
+  1. `Creacionales (5)`: Cómo crear objetos
+  2. `Estructurales (7)`: Cómo componer objetos y clases
+  3. `De comportamiento (11)`: Cómo interactúan objetos y clases
+
+Este libro **estableció un vocabulario universal en el desarrollo de software**. Ahora, cuando alguien dice "usemos un Singleton" o "esto es un Observer", todos los desarrolladores entienden inmediatamente de qué se habla.
 
 <a id="beneficios-patrones-diseno"></a>
 ### Beneficios de Usar Patrones de Diseño
 
+1. `Soluciones probadas`
+- No se reinventa la rueda. **Se usan soluciones que han funcionado en miles de proyectos** durante décadas.
+
+2. `Código más mantenible`
+Los patrones promueven:
+
+> - `Bajo acoplamiento`: Los componentes son más independientes
+> - `Alta cohesión`: Cada clase tiene una responsabilidad clara
+> - `Flexibilidad`: Es más fácil hacer cambios sin romper todo
+
+3. `Mejores diseños`
+- Te ayudan a anticipar problemas futuros y **crear arquitecturas escalables desde el principio**.
+
 <a id="como-cuando-usar-patrones"></a>
-### Cómo y Cuándo Usar Patrones
+### ¿Cuándo usar patrones de diseño?
+
+> Cuándo SÍ usar patrones:
+
+1. El problema coincide con el patrón
+- La solución del patrón encaja **naturalmente** en el contexto del problema
+
+2. Se anticipan cambios
+- Esto es, cuando se sabe que cierta **parte del código cambiará frecuentemente**
+- Se necesita flexibilidad para **futuras extensiones**
+
+3. La complejidad lo justifica
+- La solución con el patrón es más simple que sin él
+
+
+> Cuándo NO usar patrones:
+
+1. Sobreingeniería (Overengineering)
+- Añadir complejidad innecesaria a problemas simples
+
+2. Forzar un patrón
+- Intentar hacer que tu problema encaje en un patrón
+
+3. No entiendes el patrón
+- Usarlo porque "es lo que se debe hacer" sin comprender realmente cómo funciona
 
 ---
 
@@ -197,9 +257,119 @@
 
 <a id="principios-solid"></a>
 ### Principios SOLID
+SOLID es un acrónimo de **cinco principios de diseño orientado a objetos** creados para *hacer el software más comprensible, flexible y mantenible*.
 
 <a id="srp"></a>
 #### Single Responsibility Principle (SRP)
+**Cada clase debe tener una única responsabilidad o propósito**. 
+
+> [!IMPORTANT]
+> 
+> - Si una clase tiene demasiadas responsabilidades, entonces, **cualquier cambio en una de esas responsabilidades puede afectar las demás**.
+> 
+> - Una clase debe tener solo `un "motivo para ser modificada"`. **Si múltiples stakeholders** (usuario, sistema de reportes, bases de datos, etc...) **necesitan cambiar la misma clase, viola SRP**.
+
+- Ejemplo: Violación de SRP
+```java []
+class User{
+
+  private String name;
+  private String email;
+
+  // Getters & Setters
+  // ...
+
+  // Responsabilidad 1: Validación sobre el email
+  public Boolean isValidEmail(String email) {
+    // Lógica para validar si es un email válido...
+  }
+
+  // Responsabilidad 2: Persistencia en base de datos
+  public void saveUser(User newUser) {
+    // Código para guardar al usuario en la DB...
+  }
+
+  // Responsabilidad 3: Envío de emails
+  public void sendWelcomeEmail(String addressee) {
+    // Código para enviar email...
+  }
+
+  // Responsabilidad 4: Generación de reportes
+  public Object generateUserReport(Object data) {
+    // Código para la generación de algún reporte del usuario (métricas de uso, gatos semanales, etc)...
+  }
+}
+
+```
+
+- Problemas:
+
+> 1. Si cambia el sistema de base de datos, se modifica la clase User
+> 2. Si cambia el servicio de email, se modifica la clase User
+> - Esto hace que se viole el principio de SRP
+
+
+- Ejemplo: Aplicando SRP
+```java []
+class User{
+
+  private String name;
+  private String email;
+
+  // Getters & Setters
+  // ...
+
+}
+
+
+class UtilsValidators{
+
+  public static Boolean isValidEmail(String email) {
+    // Lógica para validar si es un email válido...
+  }
+
+
+  // Otros métodos para validaciones ... 
+
+}
+
+class UserRepository{
+
+  public void saveUser(User newUser) {
+    // Código para guardar al usuario en la DB...
+  }
+
+  // Otros método que permite las operaciones sobre la entidad del Usuario...
+
+}
+
+class EmailService{
+
+  public void sendWelcomeEmail(String addressee) {
+    // Código para enviar email...
+  }
+
+  // Otros métodos para diferentes emails ... 
+
+}
+
+class UserReportService{
+
+  public Object generateUserReport(Object data) {
+    // Código para la generación del reporte para las métricas de uso u otra escenario
+  }
+
+  // Otros métodos para diferentes reportes del usuario ... 
+
+}
+
+```
+
+- Beneficios
+  
+> 1. Cada clase es más fácil de entender
+> 2. Los cambios están aislados. Por ejemplo: Sí se cambia el servicio externo para enviar emails, el cambio solo es dentro de su clase.
+> 3. Permite el código reutilizable. 
 
 <a id="ocp"></a>
 #### Open/Closed Principle (OCP)
