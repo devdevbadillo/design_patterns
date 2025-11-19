@@ -374,8 +374,114 @@ class UserReportService{
 <a id="ocp"></a>
 #### Open/Closed Principle (OCP)
 
+El principio de abierto/cerrado fue acuñado por **Bertrand Meyer** en su libro `Object Oriented Software Construction`, quien lo definió de la siguiente manera
+
+- Las entidades de software (**clases, módulos, funciones, etc**) deben de estar **abierta para su extensión, pero cerradas para su modificación**.
+
+ Años despues, Bob Martin amplió la definición de la siguiente manera:
+
+- El comportamiento de **un sistema debería de ser capaz de ser extendido sin necesidad de modificar dicho sistema**.
+
+> [!IMPORTANT]
+> El objetivo principal del principio de abierto/cerrado es **diseñar soluciones que tomen en cuenta los cambios que se puedan dar en el futuro** y estructurar las soluciones para que se puedan agregar cambios sin afectar el código existente.
+
+Por ejemplo, un sistema integrado de desarrollo (IDE) permite agregar plugins siempre y cuando cada extensión siga las reglas definidas para su implementación. Es decir, el sistema se encuentra abierto para su extensión mediante plugins pero no para la modificación de las funciones centrales del IDE.
+
+
+> Escenario
+
+Supongamos que se tiene que realizar el módulo de pasarelas de pagos. Inicialmente el proyecto solo tendrá el acceso de pagos con tarjeta de crédito o de débito. 
+
+Con estos requerimientos, el desarrollador implementa el siguiente código:
+
+```java []
+class CardPayment{
+  private String holder;
+  private String cardNumber;
+  private String provider;
+  private Double amount;
+
+  // constructors
+
+  // getters && setters
+}
+
+class ProccessPayment{
+  public static void processPayment(CardPayment card){
+    // código para procesar el pago
+  }
+}
+```
+
+Inicialmente el código satisface el requerimiento del sistema, pero, pasan los meses y el negocio crece a tal punto que se necesita ampliar la pasarelas de pagos para ampliar el segmento de mercado. Así nace la nueva necesidad de integrar pagos con Paypal y Apple Pay. 
+
+Con ello se genera un conflicto, pues, el método que contiene la lógica que maneja el procesamiento de pagos está atado a trabajar con tarjetas de crédito o de débito y no con provedores como Paypal y ApplePay. Por lo qué, **se tendría que modificar el core de la funcionalidad** para satisfacer esta necesidad *(se rompe el principio de open/closed)*.
+
+> Siguiendo el principio de Open/Closed
+
+```java []
+interface ProccessPayment{
+  public void processPayment();
+}
+
+class PayPalPayment implements ProccessPayment{
+  // Atributos
+  
+  // constructors
+
+  // getters && setters
+
+  // Implementación de cómo procesar el pago de acuerdo con el provedor de PayPal
+}
+
+class CardPayment implements ProccessPayment{
+  // Atributos
+  
+  // constructors
+
+  // getters && setters
+
+  // Implementación de cómo procesar el pago de acuerdo con el tipo de tarjeta (debido, credito) y su provedor (bbva, santander, etc)
+}
+
+class ApplePayment implements ProccessPayment{
+  // Atributos
+  
+  // constructors
+
+  // getters && setters
+
+  // Implementación de cómo procesar el pago de acuerdo con el provedor de ApplePay
+}
+```
+De esta manera, el sistema esta abierto a extender nuevos procesos de pagos ya sean con Stripe, OpenPay, etc. Todo esto sin afectar el core de funcionalidades de procesamiento de pagos ya establecidos.
+
+Funciones que usan punteros de referencia a clases base deben de poder usar objetos de clases derivadas sin saberlo.
+
 <a id="lsp"></a>
 #### Liskov Substitution Principle (LSP)
+
+Esté principio es el más técnico de todos y hace referencia al correcto uso de la herencia. 
+
+Robert C. Martin `redefinió` el concepto dado por Liskov (es la forma más adoptada por los desarrolladores) de la siguiente manera:
+
+> Funciones que usan punteros de referencia a clases base deben de poder usar objetos de clases derivadas sin saberlo.
+
+En muchas ocasiones los desarrolladores piensan que este principio tiene como objetivo el buscar que una clase hija tenga una relación de "is a" o "es de" de una clase padre. Por ejemplo no puede haber herencia entre Coche y Motor porque un Motor no es un Coche . Sin embargo sí puede haber relación de herencia entre Persona y Deportista ya que un deportista es una persona. Lo cierto es que este no es el objetivo del principio, pues, va más allá en la práctica.
+
+Supongamos que se declaran las siguientes clases:
+
+```java[]
+public class Person {
+    private String name;
+    private String lastName;
+
+    // Constructors
+
+    // Getters && Setters
+    
+}
+```
 
 <a id="isp"></a>
 #### Interface Segregation Principle (ISP)
