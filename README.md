@@ -454,6 +454,7 @@ class ApplePayment implements ProccessPayment{
   // Implementación de cómo procesar el pago de acuerdo con el provedor de ApplePay
 }
 ```
+
 De esta manera, el sistema esta abierto a extender nuevos procesos de pagos ya sean con Stripe, OpenPay, etc. Todo esto sin afectar el core de funcionalidades de procesamiento de pagos ya establecidos.
 
 Funciones que usan punteros de referencia a clases base deben de poder usar objetos de clases derivadas sin saberlo.
@@ -467,27 +468,172 @@ Robert C. Martin `redefinió` el concepto dado por Liskov (es la forma más adop
 
 > Funciones que usan punteros de referencia a clases base deben de poder usar objetos de clases derivadas sin saberlo.
 
-En muchas ocasiones los desarrolladores piensan que este principio tiene como objetivo el buscar que una clase hija tenga una relación de "is a" o "es de" de una clase padre. Por ejemplo no puede haber herencia entre Coche y Motor porque un Motor no es un Coche . Sin embargo sí puede haber relación de herencia entre Persona y Deportista ya que un deportista es una persona. Lo cierto es que este no es el objetivo del principio, pues, va más allá en la práctica.
+En muchas ocasiones los desarrolladores piensan que este principio tiene como objetivo el buscar que una clase hija tenga una relación de *"is a"* o *"es de"* de una clase padre. Por ejemplo no puede haber herencia entre Coche y Motor porque un Motor no es un Coche . Sin embargo sí puede haber relación de herencia entre Rectangulo y Cuadrado ya que un Cuadrado es un rectangulo. Lo cierto es que este no es el objetivo del principio, pues, va más allá en la práctica.
 
-Supongamos que se declaran las siguientes clases:
+En la práctica, esto significa que cuando se está usando herencia, las clases derivadas `(subtipos)` deben ser capaces de sustituir a sus clases base `(supertipos)` sin que el código cliente (el código que usa la clase base) **sepa que ha ocurrido una sustitución o tenga que manejar un comportamiento inesperado**.
 
-```java[]
-public class Person {
-    private String name;
-    private String lastName;
+> La clase hija debe cumplir con el contrato de la clase padre. Esto incluye:
+>
+> 1. No violar precondiciones (requerimientos) en los métodos sobrescritos.
+> 
+> 2. No debilitar postcondiciones (garantías) en los métodos sobrescritos.
+>
+> 3. No lanzar excepciones inesperadas.
 
-    // Constructors
+Supongamos que tenemos una clase base `Rectangulo`.
 
-    // Getters && Setters
-    
+```java []
+class Rectangulo{
+  private Double weight;
+  private Double height;
+
+  public void setWeight(Double w){
+    this.weight = w;
+  }
+
+  public void setHeight(Double h){
+    this.height = h;
+  }
+
+  public Double calcularArea(){
+    return weight * height;
+  }
 }
 ```
+
+Ahora creamos la clase `Cuadrado` que hereda de `Rectangulo`, porque matemáticamente, **un cuadrado es un rectángulo con lados iguales**.
+
+```java []
+class Cuadrado extends Rectangulo {
+    public void setWeight(w) {
+        this.weight = w;
+        this.height = w; // ¡También cambia el alto!
+    }
+
+    public void setHeight(h) {
+        this.weight = h; // ¡También cambia el ancho!
+        this.height = h;
+    }
+}
+```
+
+Para mantener la propiedad de lados iguales en el `Cuadrado`, **necesitamos sobrescribir** (o, en este caso, implementar con lógica especial) **los métodos de su clase base**.
+
+Consideremos una función que trabaja con un Rectangulo:
+
+```java []
+
+public class Test{
+
+  public static void testCalcularArea(Rectangulo r){
+      r.setWeight(5);
+      r.setHeight(4);
+      assert(r.calcularArea() == 20); // True
+  }
+
+  public static final void main(final String[] args){
+    Rectangulo r = new Rectangulo();
+    testCalcularArea(r); // True;
+
+    Cuadrado c = new Cuadrado();
+    testCalcularArea(c); // False;
+
+    //   r.setWeight(5); -> c.height = 5, c.weight = 5
+    //   r.setWeight(4); -> c.height = 4, c.weight = 4 -> calcularArea() = 16
+  }
+
+}
+```
+
+El subtipo (`Cuadrado`) alteró el comportamiento esperado (el "contrato") del supertipo (`Rectangulo`), **violando el LSP**.
 
 <a id="isp"></a>
 #### Interface Segregation Principle (ISP)
 
+Esté principio **trata sobre la cohesión y el acoplamiento en las interfaces dentro de nuestro sistemaa**. La idea central es sencilla: *"Los clientes no deberían verse obligados a depender de interfaces que no utilizan"*.
+
+En otras palabras, es mejor tener varias interfaces específicas y pequeñas, en lugar de una sola que intente hacer de todo.
+
+Para ilustrar la violación del principio, imaginemos que estamos en el desarrollo de E-commerce y estámos creando una sola interfaz `IOrderProcessor` que se encargue de **todo** tipo de pedidos.
+
+Cómo se ha mencionado, está interface se va a encargar de procesar todo tipo de pedidos. De está manera, salen algunos comportamientos por naturaleza, por ejemplo: Si es un pedido de artículo físico, entonces, se tiene que enviar el pedido por paquetería y si es un pedido de algo digital (Ej. Licencia de Microsoft), entonces, se tiene que generar firmas para integridad del software o licencias para su uso.
+
+Bajo este análisis, entonces, nuestra interface `IOrderProcessor` quedaría plasmada del siguiente modo:
+
+```java []
+public interface IOrderProcessor{
+    void processPayment();    // Para ambos
+    void sendPackage();       // Para físicos
+    void generateLicense();   // Para digitales
+}
+```
+
+Supongamos que se han divido las ventas en diferentes secciones, quizás Zapatos, Electrónicos, Software, etc. De tal manera que cada sección de venta tenga que implementar su forma de procesar sus ordenes.
+
+```java []
+public class ShoesSection implements IOrderProcessor{
+
+    public void processPayment(){
+        // Lógica real de pago...
+    }
+
+    public void sendPackage(){
+        // Lógica real de envío...
+    }
+
+    // Estamos obligados a tener esto aquí.
+    public void generateLicense(){ 
+        throw new NotImplementedException("¡Los zapatos no son software!");
+    }
+
+}
+```
+
+De está manera estamos violando el principio de Segregación de Interfaces, ya que nos vemos obligados a implementar métodos que no se utiliza dentro de ámbitos específicos. El Principio de Segregación de Interfaces nos dice que debemos romper esa interfaz gigante en interfaces más pequeñas y específicas.
+
+> Solución
+
+
+```java []
+public interface IPaymentProcessor {
+    void processPayment();
+}
+
+
+public interface IPhysicalOrder {
+    void sendPackage();
+}
+
+public interface IDigitalOrder {
+    void generateLicense(); 
+}
+
+public class ShoesSection implements IPhysicalOrder, IPaymentProcessor{
+
+    public void processPayment(){
+        // Lógica real de pago...
+    }
+
+    public void sendPackage(){
+        // Lógica real de envío...
+    }
+}
+```
+
+Al separarlas completamente, logramos que sean **independientes entre sí**. Esto nos da la libertad de *"mezclar y combinar"*. Esto permite tener un software con un bajo acoplamiento y una alta cohesíon.
+
 <a id="dip"></a>
 #### Dependency Inversion Principle (DIP)
+
+De los principios SOLID suele ser el que marca la diferencia entre un código rígido y uno flexible y escalable.
+
+La definición formal (propuesta por Robert C. Martin) establece dos reglas:
+
+> 1. Los módulos de alto nivel no deben depender de módulos de bajo nivel. Ambos deben depender de abstracciones.
+>
+> 2. **Las abstracciones no deben depender de los detalles**. Los detalles (`implementaciones concretas`) deben depender de las abstracciones.
+
+Supongamos que se está construyendo un sistema de notificaciones dentro de un E-commerce. Cuando alguien compra, se le quiere enviar una confirmación.
 
 <a id="acronimos-filosofias"></a>
 ### Acrónimos y Filosofías de Desarrollo
