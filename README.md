@@ -659,7 +659,9 @@ public class AuthUserService{
 }
 ```
 
-En este ejemplo, `UserService` depende directamente de la clase `UserRepositoryImpl`. Este acoplamiento estrecho dificulta intercambiar o ampliar la implementación de la base de datos sin modificar la clase `UserService`. Cada cambio en la dependencia también requiere una actualización de `UserService`, pero, ¿Por qué cada cambio en `UserRepositoryImpl` requiere también la actualización de `UserService`? A continuación, se muestran varios tipos de cambios en `UserRepositoryImpl` que forzarían a modificar `AuthUserService`
+En este ejemplo, `UserService` depende directamente de la clase `UserRepositoryImpl`. Este acoplamiento estrecho dificulta intercambiar o ampliar la implementación de la base de datos sin modificar la clase `UserService`. 
+
+Cada cambio en la dependencia también requiere una actualización de `UserService`, pero, ¿Por qué cada cambio en `UserRepositoryImpl` requiere también la actualización de `UserService`? A continuación, se muestran varios tipos de cambios en `UserRepositoryImpl` que forzarían a modificar `AuthUserService`
 
 1. Renombramiento de la Clase: Si se cambia `UserRepositoryImpl` a `PostgresUserRepository` (por ejemplo), se debería de actualizar `AuthUserService` para cambiar el tipo del campo userRepository y los import correspondientes.
 2. Sustitución: **Si se decide cambiar la implementación de la base de datos** (ej. de SQL a NoSQL), no se puede simplemente crear una nueva clase (`NoSqlUserRepository`) y usarla, ya que `AuthUserService` **solo acepta el tipo `UserRepositoryImpl`**. Se necesita modificar `AuthUserService` para aceptar el nuevo tipo.
@@ -672,7 +674,7 @@ public interface IUserRepository {
     User findUserById(String id);
 }
 
-public class UserRepositoryImpl{
+public class UserRepositoryImpl implements IUserRepository{
     
     public User findUserById(String id){
       // Logica para encontrar al usuario
@@ -699,11 +701,21 @@ Ahora, si se crea una nueva implementación de repositorio, como `MongoUserRepos
 <a id="kiss"></a>
 #### KISS (Keep It Simple, Stupid)
 
+El principio KISS , acrónimo de "Keep It Simple, Stupid", su idea es sencilla: **mantener el código simple y evitar la complejidad innecesaria**. El objetivo no es sacrificar la funcionalidad, sino diseñar la solución más sencilla posible sin comprometer el rendimiento ni la usabilidad. Los sistemas sencillos son más fáciles de mantener, depurar y ampliar.
+
 <a id="yagni"></a>
 #### YAGNI (You Aren't Gonna Need It)
 
+El principio YAGNI, acrónimo de "You Aren't Gonna Need It" ("No lo vas a necesitar"), es una filosofía de desarrollo de software que establece que **el desarrollo debe centrarse en los requisitos y las funcionalidades que son necesarias `ahora mismo`**, en lugar de especular sobre futuras necesidades. 
+
+Su aplicación ayuda a ahorrar tiempo y recursos, reduce la complejidad del código y permite enfocarse en las prioridades del proyecto. 
+
 <a id="dry"></a>
 #### DRY (Don't Repeat Yourself)
+
+El principio DRY, acrónimo "Don't Repeat Yourself" ("No te repitas"). Es un principio de desarrollo de software que **busca reducir la duplicación de código**. Esto se logra muchas veces tienendo cada pieza de información o lógica debe en una sola fuente autorizada.
+
+Tener cada pieza en una sola fuente autorizada permite la reutilización de código a través de funciones, métodos o clases que permite que el código base sea más pequeño, legible y menos propenso a errores. 
 
 <a id="minima-sorpresa"></a>
 #### Principio de la Mínima Sorpresa
