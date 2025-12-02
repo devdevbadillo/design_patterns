@@ -633,7 +633,65 @@ La definición formal (propuesta por Robert C. Martin) establece dos reglas:
 >
 > 2. **Las abstracciones no deben depender de los detalles**. Los detalles (`implementaciones concretas`) deben depender de las abstracciones.
 
-Supongamos que se está construyendo un sistema de notificaciones dentro de un E-commerce. Cuando alguien compra, se le quiere enviar una confirmación.
+Regularmente esto lo haremos inyectando dependencias en el constructor de la clase, pero **estas dependencias serán interfaces o clases abstractas, no clases finales**.
+
+> Ejemplo
+
+Supongamos que se tiene una clase `AuthUserService` responsable de la autenticación de usuarios y supongamos que depende de una clase concreta `UserRepositoryImpl` para obtener los datos del usuario en la base de datos. 
+
+```java []
+public class UserRepositoryImpl{
+    
+    public User findUserById(String id){
+      // Logica para encontrar al usuario
+    }
+}
+
+public class AuthUserService{
+
+    private final UserRepositoryImpl userRepository;
+
+    public User authenticateUser(){
+      User user = userRepository.findUserById(String id);
+      // Logica para autenticar al usuario
+    }
+
+}
+```
+
+En este ejemplo, `UserService` depende directamente de la clase `UserRepositoryImpl`. Este acoplamiento estrecho dificulta intercambiar o ampliar la implementación de la base de datos sin modificar la clase `UserService`. Cada cambio en la dependencia también requiere una actualización de `UserService`, pero, ¿Por qué cada cambio en `UserRepositoryImpl` requiere también la actualización de `UserService`? A continuación, se muestran varios tipos de cambios en `UserRepositoryImpl` que forzarían a modificar `AuthUserService`
+
+1. Renombramiento de la Clase: Si se cambia `UserRepositoryImpl` a `PostgresUserRepository` (por ejemplo), se debería de actualizar `AuthUserService` para cambiar el tipo del campo userRepository y los import correspondientes.
+2. Sustitución: **Si se decide cambiar la implementación de la base de datos** (ej. de SQL a NoSQL), no se puede simplemente crear una nueva clase (`NoSqlUserRepository`) y usarla, ya que `AuthUserService` **solo acepta el tipo `UserRepositoryImpl`**. Se necesita modificar `AuthUserService` para aceptar el nuevo tipo.
+
+> Solución
+
+
+```java []
+public interface IUserRepository {
+    User findUserById(String id);
+}
+
+public class UserRepositoryImpl{
+    
+    public User findUserById(String id){
+      // Logica para encontrar al usuario
+    }
+}
+
+public class AuthUserService{
+
+    private final IUserRepository userRepository;
+
+    public User authenticateUser(){
+      User user = userRepository.findUserById(String id);
+      // Logica para autenticar al usuario
+    }
+
+}
+```
+
+Ahora, si se crea una nueva implementación de repositorio, como `MongoUserRepository`. El único lugar que se tiene que cambiar es donde se crean y se conectan estas dos clases (**el punto de inyección**), manteniendo a `AuthUserService` flexible y aislado de los detalles de la base de datos.
 
 <a id="acronimos-filosofias"></a>
 ### Acrónimos y Filosofías de Desarrollo
